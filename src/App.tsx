@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, Trophy, Star, MessageCircle, Home, User, ListTodo, Music, VolumeX, Lock, Unlock } from 'lucide-react';
+import { ShoppingBag, Trophy, MessageCircle, Home, User, ListTodo, Music, VolumeX, Lock, Unlock } from 'lucide-react';
 
-// --- КОНСТАНТЫ И БАЗЫ ДАННЫХ ---
 const ROOMS = [
   { id: 0, name: 'Мастерская', cost: 0, bg: 'from-slate-900 to-slate-800' },
   { id: 1, name: 'Мойка', cost: 100, bg: 'from-cyan-900 to-blue-900' },
@@ -23,9 +22,7 @@ const SHOP_ITEMS = [
   { id: 3, name: 'Супер Чип', cost: 1000, boost: 20, type: 'click' },
 ];
 
-// --- ГЛАВНОЕ ПРИЛОЖЕНИЕ ---
 export default function App() {
-  // --- СОХРАНЕНИЕ ---
   const getSaved = (key: string, def: any) => {
     const saved = localStorage.getItem(key);
     return saved ? JSON.parse(saved) : def;
@@ -40,18 +37,15 @@ export default function App() {
   const [cps, setCps] = useState(() => getSaved('obot_cps', 0));
   const [unlockedRooms, setUnlockedRooms] = useState<number[]>(() => getSaved('obot_rooms', [0]));
   
-  // --- ТЕКУЩЕЕ СОСТОЯНИЕ ---
   const [currentRoom, setCurrentRoom] = useState(0);
   const [activeTab, setActiveTab] = useState<'home' | 'shop' | 'quests' | 'profile' | 'chat'>('home');
   const [musicOn, setMusicOn] = useState(true);
-  const [emotion, setEmotion] = useState('happy');
+  const [emotion] = useState('happy');
   const [isJumping, setIsJumping] = useState(false);
   
-  // --- СВАЙП ---
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
 
-  // --- АУДИО СИСТЕМА ---
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   const playBeep = () => {
@@ -79,7 +73,6 @@ export default function App() {
     window.speechSynthesis.speak(utterance);
   };
 
-  // Сохранение при изменениях
   useEffect(() => {
     localStorage.setItem('obot_started', JSON.stringify(hasStarted));
     localStorage.setItem('obot_type', JSON.stringify(botType));
@@ -91,16 +84,13 @@ export default function App() {
     localStorage.setItem('obot_rooms', JSON.stringify(unlockedRooms));
   }, [hasStarted, botType, coins, level, xp, cpc, cps, unlockedRooms]);
 
-  // Пассивный доход
   useEffect(() => {
     const timer = setInterval(() => { if (cps > 0) setCoins(p => p + cps); }, 1000);
     return () => clearInterval(timer);
   }, [cps]);
 
-  // Эволюция
   const evoStage = level < 5 ? 1 : level < 15 ? 2 : 3;
 
-  // --- ЛОГИКА ---
   const handleBoxOpen = () => {
     playBeep();
     const randomBot = ROBOT_TYPES[Math.floor(Math.random() * ROBOT_TYPES.length)];
@@ -148,7 +138,6 @@ export default function App() {
     }
   };
 
-  // --- ЭКРАН ЛУТБОКСОВ ---
   if (!hasStarted) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6 text-white text-center">
@@ -169,10 +158,8 @@ export default function App() {
     );
   }
 
-  // --- ГЛАВНЫЙ ЭКРАН ИГРЫ ---
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans select-none overflow-hidden flex flex-col pb-24">
-      {/* Шапка */}
       <div className="flex justify-between items-center p-4 bg-slate-900/80 backdrop-blur z-10 border-b border-slate-800">
         <button onClick={() => setActiveTab('chat')} className="p-2 bg-slate-800 rounded-full text-cyan-400">
           <MessageCircle size={20} />
@@ -192,25 +179,21 @@ export default function App() {
         </button>
       </div>
 
-      {/* Центральная часть с комнатами (СВАЙП) */}
       <div 
         className={`flex-1 flex flex-col relative bg-gradient-to-b ${ROOMS[currentRoom].bg} transition-colors duration-500`}
         onTouchStart={e => setTouchStart(e.targetTouches[0].clientX)}
         onTouchEnd={e => { setTouchEnd(e.changedTouches[0].clientX); handleSwipe(); }}
       >
-        {/* Индикатор комнат */}
         <div className="absolute top-4 w-full flex justify-center gap-2 z-10">
           {ROOMS.map((r, idx) => (
             <div key={r.id} className={`w-2 h-2 rounded-full transition-all ${currentRoom === idx ? 'bg-white scale-150' : unlockedRooms.includes(r.id) ? 'bg-white/50' : 'bg-red-500/30'}`} />
           ))}
         </div>
 
-        {/* Название комнаты */}
         <div className="text-center mt-8 text-xl font-bold tracking-widest uppercase text-white/80 drop-shadow-md">
           {ROOMS[currentRoom].name}
         </div>
 
-        {/* КОНТЕНТ ВКЛАДОК */}
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           
           {activeTab === 'home' && (
@@ -221,24 +204,19 @@ export default function App() {
                     {coins.toLocaleString()} 🪙
                   </div>
                   
-                  {/* РОБОТ С ЭВОЛЮЦИЕЙ */}
                   <div 
                     onPointerDown={handleMainClick}
                     className={`relative cursor-pointer touch-none transition-transform duration-100 ${isJumping ? '-translate-y-4 scale-105' : ''}`}
                   >
                     <svg width="200" height="240" viewBox="0 0 200 240">
-                      {/* Тень */}
                       <ellipse cx="100" cy="220" rx="60" ry="10" fill="#000" opacity="0.3" />
                       
-                      {/* Тело (Стадия 1+) */}
                       <rect x="50" y="100" width="100" height="110" rx="20" fill={botType?.color} stroke="#334155" strokeWidth="4" />
                       
-                      {/* Экран-лицо (Стадия 2+) */}
                       {evoStage >= 2 && (
                         <rect x="60" y="115" width="80" height="50" rx="10" fill="#0f172a" />
                       )}
                       
-                      {/* Глаза (Стадия 2+) */}
                       {evoStage >= 2 && emotion === 'happy' && (
                         <>
                           <circle cx="80" cy="140" r="10" fill={botType?.eye} />
@@ -246,7 +224,6 @@ export default function App() {
                         </>
                       )}
 
-                      {/* Руки и Улыбка (Стадия 3+) */}
                       {evoStage >= 3 && (
                         <>
                           <rect x="25" y="120" width="15" height="60" rx="7" fill={botType?.color} stroke="#334155" strokeWidth="3" />
@@ -258,7 +235,6 @@ export default function App() {
                   </div>
                 </>
               ) : (
-                /* КОМНАТА ЗАКРЫТА */
                 <div className="bg-slate-900/80 p-6 rounded-3xl border border-slate-700 text-center backdrop-blur-md">
                   <Lock className="w-16 h-16 mx-auto mb-4 text-slate-500" />
                   <h3 className="text-xl font-bold mb-2">Комната закрыта</h3>
@@ -330,7 +306,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* НИЖНЕЕ МЕНЮ (4 кнопки) */}
       <div className="fixed bottom-0 w-full bg-slate-900 border-t border-slate-800 pb-safe">
         <div className="flex justify-around p-3">
           {[
